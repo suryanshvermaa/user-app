@@ -1,0 +1,38 @@
+services:
+  postgres: 
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: user-app-db
+    networks:
+      - user-app-network
+    ports:
+      - "5432:5432"
+    volumes: 
+      - "/C/Users/surya/OneDrive/Desktop/User-Crud/user-app/init-scripts:/docker-entrypoint-initdb.d"
+      - "/C/Users/surya/OneDrive/Desktop/User-Crud/database-mnt-data:/var/lib/postgresql/data"
+  
+  drogon-dev:
+    image: drogonframework/drogon
+    ports:
+      - "3000:3000"
+    networks:
+      - user-app-network
+    volumes:
+      - "/c/Users/surya/OneDrive/Desktop/User-Crud:/install/drogon/app"
+    stdin_open: true
+    tty: true 
+
+  # user-app:
+  #   image: user-app
+  #   networks:
+  #     - user-app-network
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - postgres
+
+networks:
+  user-app-network:
+    driver: bridge
