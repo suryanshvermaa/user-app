@@ -10,28 +10,30 @@ services:
     ports:
       - "5432:5432"
     volumes: 
-      - "/C/Users/surya/OneDrive/Desktop/User-Crud/user-app/init-scripts:/docker-entrypoint-initdb.d" #your local path to the init-scripts folder
+      - "/C/Users/surya/OneDrive/Desktop/User-Crud/user-app/init-scripts:/docker-entrypoint-initdb.d" #your local exact path to the init-scripts folder
       - "/C/Users/surya/OneDrive/Desktop/User-Crud/database:/var/lib/postgresql/data"  #your local path to the database-mnt-data folder
   
-  drogon-dev:
-    image: drogonframework/drogon
-    ports:
-      - "3000:3000"
-    networks:
-      - user-app-network
-    volumes:
-      - "/c/Users/surya/OneDrive/Desktop/User-Crud:/install/drogon/app"
-    stdin_open: true
-    tty: true 
-
-  # user-app:
-  #   image: user-app
-  #   networks:
-  #     - user-app-network
+  #devolopment environment
+  # drogon-dev:
+  #   image: drogonframework/drogon
   #   ports:
   #     - "3000:3000"
-  #   depends_on:
-  #     - postgres
+  #   networks:
+  #     - user-app-network
+  #   volumes:
+  #     - "/c/Users/surya/OneDrive/Desktop/User-Crud:/install/drogon/app"
+  #   stdin_open: true
+  #   tty: true 
+
+# production environment
+  user-app:
+    image: user-app
+    networks:
+      - user-app-network
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
 
 networks:
   user-app-network:

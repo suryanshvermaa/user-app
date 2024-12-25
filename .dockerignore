@@ -3,6 +3,10 @@
 Dockerfile
 docker-compose.yml
 build/
+jwt-cpp/build/
+libbcrypt/build/
+
+*/build/*
 
 *.d
 
