@@ -32,7 +32,14 @@ add_executable(${PROJECT_NAME} main.cc)
 
 # and comment out the following lines
 find_package(Drogon CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon bcrypt)
+target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon)
+# ############################################################################
+target_include_directories(${PROJECT_NAME} PRIVATE /install/drogon/app/user-app/jwt-cpp/include)
+link_directories(/install/drogon/app/user-app/libbcrypt/build)
+target_link_libraries(${PROJECT_NAME} PRIVATE bcrypt)
+find_package(OpenSSL REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL)
+
 
 # ##############################################################################
 
@@ -62,6 +69,9 @@ drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
 target_include_directories(${PROJECT_NAME}
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
                                    ${CMAKE_CURRENT_SOURCE_DIR}/models)
+target_include_directories(${PROJECT_NAME}
+                           PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+                                   ${CMAKE_CURRENT_SOURCE_DIR}/helpers)
 target_sources(${PROJECT_NAME}
                PRIVATE
                ${SRC_DIR}
@@ -69,6 +79,10 @@ target_sources(${PROJECT_NAME}
                ${FILTER_SRC}
                ${PLUGIN_SRC}
                ${MODEL_SRC})
+
+
+
+
 # ##############################################################################
 # uncomment the following line for dynamically loading views 
 # set_property(TARGET ${PROJECT_NAME} PROPERTY ENABLE_EXPORTS ON)

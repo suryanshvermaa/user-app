@@ -10,8 +10,8 @@ services:
     ports:
       - "5432:5432"
     volumes: 
-      - "/C/Users/surya/OneDrive/Desktop/User-Crud/user-app/init-scripts:/docker-entrypoint-initdb.d"
-      - "/C/Users/surya/OneDrive/Desktop/User-Crud/database-mnt-data:/var/lib/postgresql/data"
+      - "/C/Users/surya/OneDrive/Desktop/User-Crud/user-app/init-scripts:/docker-entrypoint-initdb.d" #your local path to the init-scripts folder
+      - "/C/Users/surya/OneDrive/Desktop/User-Crud/database:/var/lib/postgresql/data"  #your local path to the database-mnt-data folder
   
   drogon-dev:
     image: drogonframework/drogon

@@ -6,6 +6,7 @@
 #include<helper/jwt.cc>
 using namespace api::v1;
 
+//signup controller
 void User::signup(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback){
     auto userData=req->getJsonObject();
      if(!userData || !userData->isMember("email") || !userData->isMember("password") || !userData->isMember("name")) {
@@ -39,6 +40,7 @@ void User::signup(const HttpRequestPtr& req, std::function<void (const HttpRespo
 }
 
 
+//login controller
 void User::login(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback){
     auto userData=req->getJsonObject();
     if(!userData || !userData->isMember("email") || !userData->isMember("password")){
@@ -88,15 +90,109 @@ void User::login(const HttpRequestPtr& req, std::function<void (const HttpRespon
         emailStr);
 }
 
-void User::auth(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback){
-    auto body=req->getJsonObject();
-    string token=(*body)["token"].as<string>();
-    string decoded=decoded_token(token);
-    Json::Value obj;
-    obj["success"]=true;
-    LOG_INFO<<"id is:"<<decoded;
-    auto res=HttpResponse::newHttpJsonResponse(obj);
-    res->setStatusCode(k200OK);
-    callback(res);
+//get users
+void User::getUsers(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback){
+    dbClient->execSqlAsync("SELECT * from users",
+        [callback](const Result& result) {
+            Json::Value respObj;
+            Json::Value users;
+            for(auto row:result){
+                Json::Value user;
+                user["id"]=row["id"].as<int>();
+                user["name"]=row["name"].as<string>();
+                user["email"]=row["email"].as<string>();
+                users.append(user);
+            }
+            respObj["users"]=users;
+            respObj["success"]=true;
+            respObj["message"]="users fetched successfully";
+            auto response = HttpResponse::newHttpJsonResponse(respObj);
+            response->setStatusCode(k200OK);
+            callback(response); 
+        },  
+        [callback](const DrogonDbException& e) {
+            auto response = HttpResponse::newHttpJsonResponse(Json::Value(e.base().what()));
+            response->setStatusCode(k500InternalServerError);
+            callback(response);
+        });
 }
 
+// //update user
+void User::updateUser(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback){
+    auto userData=req->getJsonObject();
+    if(!userData || !userData->isMember("token")|| !userData->isMember("password") || !userData->isMember("name")){
+        auto res=drogon::HttpResponse::newHttpResponse();
+        res->setStatusCode(drogon::k400BadRequest);
+        res->setBody("Not authorized or all fields are required");
+        callback(res);
+        return;
+    }
+    string token=(*userData)["token"].asString();
+    string decoded=decoded_token(token);
+    if(decoded==""){
+        auto res=drogon::HttpResponse::newHttpResponse();
+        res->setStatusCode(drogon::k400BadRequest);
+        res->setBody("Not authorized");
+        callback(res);
+        return;
+    }
+    int id=stoi(decoded);
+    string password=(*userData)["password"].asString();
+    string name=(*userData)["name"].asString();
+    if(password!=""&&name!=""){
+        dbClient->execSqlAsync(
+            "UPDATE users SET name=$1,password=$2 WHERE id=$3",
+            [callback](const Result& result) {
+                Json::Value resObj;
+                resObj["message"]="user updated successfully";
+                auto response = HttpResponse::newHttpJsonResponse(resObj);
+                response->setStatusCode(k200OK);
+                callback(response);
+            },
+            [callback](const DrogonDbException& e) {
+                auto response = HttpResponse::newHttpJsonResponse(Json::Value(e.base().what()));
+                response->setStatusCode(k500InternalServerError);
+                callback(response);
+            },
+            name,hash_password(password),id);
+    }
+}
+
+
+// //delete user
+
+void User::deleteUser(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback){
+    auto userTokenData=req->getJsonObject();
+    if(!userTokenData || !userTokenData->isMember("token")){
+        auto res=drogon::HttpResponse::newHttpResponse();
+        res->setStatusCode(drogon::k400BadRequest);
+        res->setBody("Not authorized");
+        callback(res);
+        return;
+    }
+    string token=(*userTokenData)["token"].asString();
+    string decoded=decoded_token(token);
+    if(decoded==""){
+        auto res=drogon::HttpResponse::newHttpResponse();
+        res->setStatusCode(drogon::k400BadRequest);
+        res->setBody("Not authorized");
+        callback(res);
+        return;
+    }
+    int id=stoi(decoded);
+    dbClient->execSqlAsync(
+        "DELETE FROM users WHERE id=$1",
+        [callback](const Result& result) {
+            Json::Value resObj;
+            resObj["message"]="user deleted successfully";
+            auto response = HttpResponse::newHttpJsonResponse(resObj);
+            response->setStatusCode(k200OK);
+            callback(response);
+        },
+        [callback](const DrogonDbException& e) {
+            auto response = HttpResponse::newHttpJsonResponse(Json::Value(e.base().what()));
+            response->setStatusCode(k500InternalServerError);
+            callback(response);
+        },
+        id);
+}
